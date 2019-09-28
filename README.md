@@ -22,4 +22,14 @@ To see if the hashes have changed since the last scan:
 md5tree -l ~/data/hashes.ldb -c .
 ```
 
+You could also use the environment variable MD5TREE_DATADIR to specify where
+the leveldb data directory is located.
+
+Specifying a different location with `-l` will overried the `MD5TREE_DATADIR`.
+
+```
+export MD5TREE_DATADIR=${HOME}/data/md5tree.ldb
+md5tree -c .
+```
+
 
