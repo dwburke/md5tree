@@ -5,25 +5,28 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"github.com/syndtr/goleveldb/leveldb"
+	//leveldb_errors "github.com/syndtr/goleveldb/leveldb/errors"
 )
 
-var output *os.File
+var conn_leveldb *leveldb.DB
 
 func main() {
-	outputfile := flag.String("o", "", "output filename (default is stdout)")
-	//dir := flag.String("d", "", "base directory to start scanning from")
+	var err error
+
+	ldb_dir := flag.String("l", "", "dir to save leveldb data")
 	flag.Parse()
 
-	if *outputfile == "" {
-		output = os.Stdout
+	if *ldb_dir != "" {
+		conn_leveldb, err = leveldb.OpenFile(*ldb_dir, nil)
+		if err != nil {
+			panic(err)
+		}
+		defer conn_leveldb.Close()
 	}
 
-	fmt.Printf("%#v\n", output)
-	fmt.Printf("%#v\n", os.Stdout)
-
 	args := flag.Args()
-
-	//fmt.Printf("%#v\n", *dir)
 
 	if len(args) < 1 {
 		fmt.Println("Specify the directory for which you desire to scan.")
@@ -50,13 +53,18 @@ func scan_directory(name string) {
 			continue
 		}
 
-		str, err := hash_file_md5(name + "/" + file.Name())
-
+		md5_str, err := hash_file_md5(name + "/" + file.Name())
 		if err != nil {
 			panic(err)
 		}
 
-		fmt.Printf("%s  %s\n", str, name+"/"+file.Name())
+		if conn_leveldb != nil {
+			if err := conn_leveldb.Put([]byte(name+"/"+file.Name()), []byte(md5_str), nil); err != nil {
+				panic(err)
+			}
+		}
+
+		fmt.Printf("%s  %s\n", md5_str, name+"/"+file.Name())
 	}
 
 }
