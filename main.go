@@ -36,7 +36,6 @@ func main() {
 func scan_directory(name string) {
 
 	files, err := ioutil.ReadDir(name)
-
 	if err != nil {
 		panic(err)
 	}
@@ -57,7 +56,7 @@ func scan_directory(name string) {
 			panic(err)
 		}
 
-		fmt.Fprintf(output, "%s  %s\n", str, name+"/"+file.Name())
+		fmt.Printf("%s  %s\n", str, name+"/"+file.Name())
 	}
 
 }
