@@ -47,7 +47,9 @@ func scan_directory(name string) {
 			continue
 		}
 
-		//fmt.Printf("%#v\n", file)
+		if file.Mode()&os.ModeSymlink != 0 {
+			continue
+		}
 
 		str, err := hash_file_md5(name + "/" + file.Name())
 
