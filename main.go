@@ -31,7 +31,7 @@ func main() {
 	ldb_dir := flag.String("l", "", "dir to save leveldb data")
 	check_value = flag.Bool("c", false, "check value against stored leveldb data (does not update database; '-l' is required)")
 	abs_paths = flag.Bool("a", false, "resolve file paths to absolute path (i.e. ../xxx becomes /home/user/foo/xxx)")
-	num_workers := flag.Int("w", 5, "number of hash workers")
+	num_workers := flag.Int("w", 1, "number of hash workers")
 	flag.Parse()
 
 	WorkerPool = workerpool.New(*num_workers)
