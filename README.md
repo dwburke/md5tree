@@ -1,6 +1,18 @@
 # md5tree
 
-Usage:
+## Why?
+
+I wrote this because I needed a tool to save large directory trees of 
+md5 hashes to periodically verify the data integrity of archived files.
+Backups are great, but bitrot is the essence of evil.  After searching, 
+I found that nobody really seemed to have solved this problem - at least 
+in a way that fits my needs - so I decided to write something and make 
+it available to the world.  I hope at least one other person finds that 
+it makes their lives easier.
+
+Pull requests welcome.
+
+## Usage
 
 To scan the current directory:
 
