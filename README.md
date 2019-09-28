@@ -32,4 +32,9 @@ export MD5TREE_DATADIR=${HOME}/data/md5tree.ldb
 md5tree -c .
 ```
 
+## Notes
+
+- Ignores symlinks
+- Ignores sockets
+
 
