@@ -75,19 +75,20 @@ func scan_directory(name string) {
 					} else {
 						panic(err)
 					}
-
 				} else if string(data) != md5_str {
 					state = "FAILED"
 				}
 
 				fmt.Printf("%s  %s: %s\n", md5_str, name+"/"+file.Name(), state)
+
 			} else {
 				fmt.Printf("%s  %s\n", md5_str, name+"/"+file.Name())
+
+				if err := ldb.Put([]byte(name+"/"+file.Name()), []byte(md5_str), nil); err != nil {
+					panic(err)
+				}
 			}
 
-			if err := ldb.Put([]byte(name+"/"+file.Name()), []byte(md5_str), nil); err != nil {
-				panic(err)
-			}
 		}
 
 	}
