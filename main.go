@@ -20,8 +20,18 @@ func main() {
 	check_value = flag.Bool("c", false, "check value against stored leveldb data (does not update database; '-l' is required)")
 	flag.Parse()
 
-	if *ldb_dir != "" {
-		full_path, err := filepath.Abs(*ldb_dir)
+	ldb_dir_env := os.Getenv("MD5TREE_DATADIR")
+
+	if *ldb_dir != "" || ldb_dir_env != "" {
+
+		var full_path string
+		var err error
+
+		if *ldb_dir != "" {
+			full_path, err = filepath.Abs(*ldb_dir)
+		} else {
+			full_path, err = filepath.Abs(ldb_dir_env)
+		}
 		if err != nil {
 			panic(err)
 		}
@@ -56,7 +66,8 @@ func scan_directory(name string) {
 			continue
 		}
 
-		if file.Mode()&os.ModeSymlink != 0 {
+		// ignore special files
+		if file.Mode()&os.ModeSymlink|os.ModeSocket|os.ModeDevice|os.ModeNamedPipe|os.ModeCharDevice != 0 {
 			continue
 		}
 
