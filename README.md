@@ -35,4 +35,5 @@ md5tree -c .
 ## Notes
 
 - Ignores symlinks, sockets, devices, named pipes
+- Console output attempts to maintain compatibility with md5sum; please submit a github issue or pull request if you run accross an issue.
 
