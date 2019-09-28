@@ -12,12 +12,12 @@ import (
 )
 
 var ldb *leveldb.DB
-var compare_before_save *bool
+var check_value *bool
 
 func main() {
 
 	ldb_dir := flag.String("l", "", "dir to save leveldb data")
-	compare_before_save = flag.Bool("c", false, "compare before saving to leveldb")
+	check_value = flag.Bool("c", false, "check value against stored leveldb data (does not update database; '-l' is required)")
 	flag.Parse()
 
 	if *ldb_dir != "" {
@@ -68,7 +68,7 @@ func scan_directory(name string) {
 		if ldb == nil {
 			fmt.Printf("%s  %s\n", md5_str, name+"/"+file.Name())
 		} else if ldb != nil {
-			if *compare_before_save {
+			if *check_value {
 
 				var state string = "OK"
 
