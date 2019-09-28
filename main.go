@@ -6,7 +6,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 
+	"github.com/gammazero/workerpool"
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldb_errors "github.com/syndtr/goleveldb/leveldb/errors"
 )
@@ -16,13 +18,20 @@ var check_value *bool
 var abs_paths *bool
 var exit_val int = 0
 
+// job workers
+var WaitGroup sync.WaitGroup
+var WorkerPool *workerpool.WorkerPool
+
 func main() {
 	var err error
 
 	ldb_dir := flag.String("l", "", "dir to save leveldb data")
 	check_value = flag.Bool("c", false, "check value against stored leveldb data (does not update database; '-l' is required)")
 	abs_paths = flag.Bool("a", false, "resolve file paths to absolute path (i.e. ../xxx becomes /home/user/foo/xxx)")
+	num_workers := flag.Int("w", 1, "number of hash workers")
 	flag.Parse()
+
+	WorkerPool = workerpool.New(*num_workers)
 
 	ldb_dir_env := os.Getenv("MD5TREE_DATADIR")
 
@@ -67,6 +76,7 @@ func main() {
 	}
 	scan_directory(path_to_scan)
 
+	WorkerPool.Stop()
 	os.Exit(exit_val)
 }
 
@@ -100,43 +110,49 @@ func scan_directory(name string) {
 			continue
 		}
 
-		md5_str, err := hash_file_md5(name + "/" + file.Name())
-		if err != nil {
-			panic(err)
-		}
-
-		if ldb == nil {
-			fmt.Printf("%s  %s\n", md5_str, name+"/"+file.Name())
-		} else if ldb != nil {
-			if *check_value {
-
-				var state string = "OK"
-
-				data, err := ldb.Get([]byte(name+"/"+file.Name()), nil)
-
-				if err != nil {
-					if err == leveldb_errors.ErrNotFound {
-						state = "NOT FOUND"
-					} else {
-						panic(err)
-					}
-				} else if string(data) != md5_str {
-					state = "FAILED"
-					exit_val = 2
-				}
-
-				fmt.Printf("%s  %s: %s\n", md5_str, name+"/"+file.Name(), state)
-
-			} else {
-				fmt.Printf("%s  %s\n", md5_str, name+"/"+file.Name())
-
-				if err := ldb.Put([]byte(name+"/"+file.Name()), []byte(md5_str), nil); err != nil {
-					panic(err)
-				}
+		cfile := file
+		WaitGroup.Add(1)
+		WorkerPool.Submit(func() {
+			md5_str, err := hash_file_md5(name + "/" + cfile.Name())
+			if err != nil {
+				panic(err)
 			}
 
-		}
+			if ldb == nil {
+				fmt.Printf("%s  %s\n", md5_str, name+"/"+cfile.Name())
+			} else if ldb != nil {
+				if *check_value {
 
+					var state string = "OK"
+
+					data, err := ldb.Get([]byte(name+"/"+cfile.Name()), nil)
+
+					if err != nil {
+						if err == leveldb_errors.ErrNotFound {
+							state = "NOT FOUND"
+						} else {
+							panic(err)
+						}
+					} else if string(data) != md5_str {
+						state = "FAILED"
+						exit_val = 2
+					}
+
+					fmt.Printf("%s  %s: %s\n", md5_str, name+"/"+cfile.Name(), state)
+
+				} else {
+					fmt.Printf("%s  %s\n", md5_str, name+"/"+cfile.Name())
+
+					if err := ldb.Put([]byte(name+"/"+cfile.Name()), []byte(md5_str), nil); err != nil {
+						panic(err)
+					}
+				}
+
+			}
+
+			WaitGroup.Done()
+		})
 	}
 
+	WaitGroup.Wait()
 }
