@@ -7,23 +7,25 @@ import (
 	"os"
 
 	"github.com/syndtr/goleveldb/leveldb"
-	//leveldb_errors "github.com/syndtr/goleveldb/leveldb/errors"
+	leveldb_errors "github.com/syndtr/goleveldb/leveldb/errors"
 )
 
-var conn_leveldb *leveldb.DB
+var ldb *leveldb.DB
+var compare_before_save *bool
 
 func main() {
 	var err error
 
 	ldb_dir := flag.String("l", "", "dir to save leveldb data")
+	compare_before_save = flag.Bool("c", false, "compare before saving to leveldb")
 	flag.Parse()
 
 	if *ldb_dir != "" {
-		conn_leveldb, err = leveldb.OpenFile(*ldb_dir, nil)
+		ldb, err = leveldb.OpenFile(*ldb_dir, nil)
 		if err != nil {
 			panic(err)
 		}
-		defer conn_leveldb.Close()
+		defer ldb.Close()
 	}
 
 	args := flag.Args()
@@ -58,13 +60,36 @@ func scan_directory(name string) {
 			panic(err)
 		}
 
-		if conn_leveldb != nil {
-			if err := conn_leveldb.Put([]byte(name+"/"+file.Name()), []byte(md5_str), nil); err != nil {
+		if ldb == nil {
+			fmt.Printf("%s  %s\n", md5_str, name+"/"+file.Name())
+		} else if ldb != nil {
+			if *compare_before_save {
+
+				var state string = "OK"
+
+				data, err := ldb.Get([]byte(name+"/"+file.Name()), nil)
+
+				if err != nil {
+					if err == leveldb_errors.ErrNotFound {
+						state = "NOT FOUND"
+					} else {
+						panic(err)
+					}
+
+				} else if string(data) != md5_str {
+					state = "FAILED"
+				}
+
+				fmt.Printf("%s  %s: %s\n", md5_str, name+"/"+file.Name(), state)
+			} else {
+				fmt.Printf("%s  %s\n", md5_str, name+"/"+file.Name())
+			}
+
+			if err := ldb.Put([]byte(name+"/"+file.Name()), []byte(md5_str), nil); err != nil {
 				panic(err)
 			}
 		}
 
-		fmt.Printf("%s  %s\n", md5_str, name+"/"+file.Name())
 	}
 
 }
