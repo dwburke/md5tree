@@ -34,7 +34,5 @@ md5tree -c .
 
 ## Notes
 
-- Ignores symlinks
-- Ignores sockets
-
+- Ignores symlinks, sockets, devices, named pipes
 
