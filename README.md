@@ -44,6 +44,9 @@ export MD5TREE_DATADIR=${HOME}/data/md5tree.ldb
 md5tree -c .
 ```
 
+If `-c` is specified, the exit code of md5tree will be 2 if a hash fails.
+Otherwise it will exit with 0.
+
 ## Notes
 
 - Ignores symlinks, sockets, devices, named pipes
