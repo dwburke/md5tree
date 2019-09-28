@@ -13,11 +13,15 @@ import (
 
 var ldb *leveldb.DB
 var check_value *bool
+var abs_paths *bool
+var exit_val int = 0
 
 func main() {
+	var err error
 
 	ldb_dir := flag.String("l", "", "dir to save leveldb data")
 	check_value = flag.Bool("c", false, "check value against stored leveldb data (does not update database; '-l' is required)")
+	abs_paths = flag.Bool("a", false, "resolve file paths to absolute path (i.e. ../xxx becomes /home/user/foo/xxx)")
 	flag.Parse()
 
 	ldb_dir_env := os.Getenv("MD5TREE_DATADIR")
@@ -25,7 +29,6 @@ func main() {
 	if *ldb_dir != "" || ldb_dir_env != "" {
 
 		var full_path string
-		var err error
 
 		if *ldb_dir != "" {
 			full_path, err = filepath.Abs(*ldb_dir)
@@ -43,6 +46,11 @@ func main() {
 		defer ldb.Close()
 	}
 
+	if ldb == nil && *check_value {
+		fmt.Println("-c requires specifying -l\n")
+		os.Exit(1)
+	}
+
 	args := flag.Args()
 
 	if len(args) < 1 {
@@ -50,7 +58,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	scan_directory(args[0])
+	path_to_scan := args[0]
+	if *abs_paths {
+		path_to_scan, err = filepath.Abs(path_to_scan)
+		if err != nil {
+			panic(err)
+		}
+	}
+	scan_directory(path_to_scan)
+
+	os.Exit(exit_val)
 }
 
 func scan_directory(name string) {
@@ -105,6 +122,7 @@ func scan_directory(name string) {
 					}
 				} else if string(data) != md5_str {
 					state = "FAILED"
+					exit_val = 2
 				}
 
 				fmt.Printf("%s  %s: %s\n", md5_str, name+"/"+file.Name(), state)
