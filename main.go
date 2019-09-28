@@ -22,9 +22,6 @@ var exit_val int = 0
 var WaitGroup sync.WaitGroup
 var WorkerPool *workerpool.WorkerPool
 
-func init() {
-}
-
 func main() {
 	var err error
 
