@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldb_errors "github.com/syndtr/goleveldb/leveldb/errors"
@@ -14,14 +15,18 @@ var ldb *leveldb.DB
 var compare_before_save *bool
 
 func main() {
-	var err error
 
 	ldb_dir := flag.String("l", "", "dir to save leveldb data")
 	compare_before_save = flag.Bool("c", false, "compare before saving to leveldb")
 	flag.Parse()
 
 	if *ldb_dir != "" {
-		ldb, err = leveldb.OpenFile(*ldb_dir, nil)
+		full_path, err := filepath.Abs(*ldb_dir)
+		if err != nil {
+			panic(err)
+		}
+
+		ldb, err = leveldb.OpenFile(full_path, nil)
 		if err != nil {
 			panic(err)
 		}
