@@ -66,7 +66,8 @@ func scan_directory(name string) {
 			continue
 		}
 
-		if file.Mode()&os.ModeSymlink != 0 {
+		// ignore special files
+		if file.Mode()&os.ModeSymlink|os.ModeSocket|os.ModeDevice|os.ModeNamedPipe|os.ModeCharDevice != 0 {
 			continue
 		}
 
